@@ -7,10 +7,16 @@ import (
 	"time"
 )
 
-type Occurrences struct {
-	Key   string
-	Value int
-}
+type (
+	SetOccurrences struct {
+		Key   string
+		Count int
+	}
+	NumberOccurrences struct {
+		Number int
+		Count  int
+	}
+)
 
 var allNumbers = make([]int, 49)
 
@@ -27,37 +33,60 @@ func drawLottery(rng *rand.Rand) []int {
 
 func runSimulation(times, topLimit int) {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	occurrences := make(map[string]int)
+	setOccurrences := make(map[string]int)
+	numberOccurrences := make(map[int]int)
 
 	for range times {
 		numbers := drawLottery(rng)
 		key := fmt.Sprintf("%v", numbers)
-		occurrences[key]++
+		setOccurrences[key]++
+		for _, number := range numbers {
+			numberOccurrences[number]++
+		}
 	}
 
-	var sortedOccurrences []Occurrences
-	for k, v := range occurrences {
-		sortedOccurrences = append(sortedOccurrences, Occurrences{k, v})
+	var sortedSetOccurrences []SetOccurrences
+	for k, v := range setOccurrences {
+		sortedSetOccurrences = append(sortedSetOccurrences, SetOccurrences{k, v})
 	}
 
-	sort.Slice(sortedOccurrences, func(i, j int) bool {
-		return sortedOccurrences[i].Value > sortedOccurrences[j].Value
+	sort.Slice(sortedSetOccurrences, func(i, j int) bool {
+		return sortedSetOccurrences[i].Count > sortedSetOccurrences[j].Count
 	})
 
-	if len(sortedOccurrences) < topLimit {
-		topLimit = len(sortedOccurrences)
+	topSetLimit := min(topLimit, len(sortedSetOccurrences))
+	fmt.Printf("Top %d Most Frequent Lottery Numbers:\n", topSetLimit)
+	for i := range topSetLimit {
+		fmt.Printf("%d. %s: %d times\n", i+1, sortedSetOccurrences[i].Key, sortedSetOccurrences[i].Count)
 	}
 
-	fmt.Printf("Top %v Most Frequent Lottery Numbers Sets:\n", topLimit)
-	for i := range topLimit {
-		fmt.Printf("%d. %s: %d times\n", i+1, sortedOccurrences[i].Key, sortedOccurrences[i].Value)
+	var sortedNumberOccurrences []NumberOccurrences
+	for number, count := range numberOccurrences {
+		sortedNumberOccurrences = append(sortedNumberOccurrences, NumberOccurrences{Number: number, Count: count})
 	}
+
+	sort.Slice(sortedNumberOccurrences, func(i, j int) bool {
+		return sortedNumberOccurrences[i].Count > sortedNumberOccurrences[j].Count
+	})
+
+	topNumberLimit := min(topLimit, len(sortedNumberOccurrences))
+	fmt.Printf("\nTop %d Most Frequently Drawn Individual Numbers:\n", topNumberLimit)
+	for i := range topNumberLimit {
+		fmt.Printf("%d. %d: %d times\n", i+1, sortedNumberOccurrences[i].Number, sortedNumberOccurrences[i].Count)
+	}
+}
+
+func timeTaken(start time.Time, name string) {
+	elapsed := time.Since(start)
+	fmt.Printf("%s took %s\n", name, elapsed)
 }
 
 // Draws 6 numbers from a range of 49 numbers, 1 to 49, and runs the simulation 1,000,000 times
 // to find the most frequent lottery numbers sets.
 // The top 20 most frequent lottery numbers sets are printed.
+// The top 20 most frequent drawn individual numbers are printed.
 func main() {
+	defer timeTaken(time.Now(), "runSimulation")
 	for i := range 49 {
 		allNumbers[i] = i + 1
 	}
