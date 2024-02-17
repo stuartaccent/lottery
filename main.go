@@ -48,7 +48,7 @@ func runSimulation(times, topLimit int) {
 		topLimit = len(sortedOccurrences)
 	}
 
-	fmt.Println("Top 10 Most Frequent Lottery Numbers Sets:")
+	fmt.Printf("Top %v Most Frequent Lottery Numbers Sets:\n", topLimit)
 	for i := range topLimit {
 		fmt.Printf("%d. %s: %d times\n", i+1, sortedOccurrences[i].Key, sortedOccurrences[i].Value)
 	}
